@@ -1,10 +1,9 @@
 package com.fabirt.debty.ui.movement.create
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ArrayAdapter
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -42,6 +41,18 @@ class CreateMovementFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Window Insets animation
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            binding.btnSave.setWindowInsetsAnimationCallback(
+                TranslateDeferringInsetsAnimationCallback(
+                    view = binding.btnSave,
+                    persistentInsetTypes = WindowInsets.Type.systemBars(),
+                    deferredInsetTypes = WindowInsets.Type.ime(),
+                    dispatchMode = WindowInsetsAnimation.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
+                )
+            )
+        }
+
         val dropdownAdapter = ArrayAdapter(
             requireContext(),
             R.layout.menu_list_item,
@@ -51,6 +62,7 @@ class CreateMovementFragment : Fragment() {
 
         binding.autoTextViewMovement.setOnItemClickListener { _, _, position, _ ->
             viewModel.changeMovementType(movementTypeOptions[position])
+            binding.inputLayoutMovement.error = null
         }
 
         binding.editTextDate.setOnClickListener {
@@ -60,6 +72,8 @@ class CreateMovementFragment : Fragment() {
         if (args.id == null) binding.editTextAmount.requestKeyboardFocus()
 
         binding.editTextAmount.addTextChangedListener(CurrencyTextWatcher(binding.editTextAmount))
+        binding.editTextAmount.addTextChangedListener { binding.inputLayoutAmount.error = null }
+        binding.editTextDescription.addTextChangedListener { binding.inputLayoutDescription.error = null }
 
         binding.btnSave.setOnClickListener {
             validateChanges(it)
@@ -99,6 +113,7 @@ class CreateMovementFragment : Fragment() {
 
         datePicker.addOnPositiveButtonClickListener { time ->
             time.utcTimeToLocaleTime()?.let {
+                binding.inputLayoutDate.error = null
                 viewModel.changeDate(it)
             }
         }
